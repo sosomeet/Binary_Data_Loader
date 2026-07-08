@@ -867,7 +867,7 @@ def parse_args():
     )
 
     # Save paths
-    parser.add_argument("--models_dir", type=str, default="./models_bin_map_enhancement")
+    parser.add_argument("--models_dir", type=str, default="./models")
     parser.add_argument("--sample_dir", type=str, default="./outputs/bin_map_samples")
     parser.add_argument("--preview_dir", type=str, default="./outputs/bin_map_preview")
     parser.add_argument("--preview_index", type=int, default=0)
