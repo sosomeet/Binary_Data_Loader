@@ -29,7 +29,7 @@ WIDTH = 200
 DEPTH = 512
 OFFSET = 48
 
-PROJECTION = "p99"          # "max", "p99", "mean"
+PROJECTION = "p99"         # "max", "p99", "mean"
 NORMALIZE = "percentile"   # "minmax", "percentile"
 
 BATCH_SIZE = 4
@@ -71,9 +71,14 @@ def psnr_per_image(
     pred = pred.clamp(0.0, 1.0)
     target = target.clamp(0.0, 1.0)
 
-    mse = torch.mean((pred - target) ** 2, dim=(1, 2, 3))
+    mse = torch.mean(
+        (pred - target) ** 2,
+        dim=(1, 2, 3),
+    )
 
-    return 10.0 * torch.log10(1.0 / (mse + eps))
+    return 10.0 * torch.log10(
+        1.0 / (mse + eps)
+    )
 
 
 def ssim_per_image(
@@ -150,16 +155,25 @@ def ssim_per_image(
         - mu_xy
     )
 
-    numerator = (2.0 * mu_xy + c1) * (2.0 * sigma_xy + c2)
+    numerator = (
+        (2.0 * mu_xy + c1)
+        * (2.0 * sigma_xy + c2)
+    )
 
     denominator = (
         (mu_x_sq + mu_y_sq + c1)
         * (sigma_x_sq + sigma_y_sq + c2)
     )
 
-    ssim_map = numerator / (denominator + eps)
+    ssim_map = numerator / (
+        denominator + eps
+    )
 
-    return ssim_map.mean(dim=(1, 2, 3)).clamp(0.0, 1.0)
+    return (
+        ssim_map
+        .mean(dim=(1, 2, 3))
+        .clamp(0.0, 1.0)
+    )
 
 
 # ============================================================
@@ -181,9 +195,14 @@ def read_bin_volume(
     Return:
         volume: float32 numpy array, shape [H, W, D]
     """
-    expected_elements = int(np.prod(shape))
+    expected_elements = int(
+        np.prod(shape)
+    )
+
     expected_size = (
-        expected_elements * np.dtype(dtype).itemsize + offset
+        expected_elements
+        * np.dtype(dtype).itemsize
+        + offset
     )
 
     file_size = path.stat().st_size
@@ -193,7 +212,8 @@ def read_bin_volume(
             f"File size mismatch: {path}\n"
             f"Expected: {expected_size} bytes\n"
             f"Actual  : {file_size} bytes\n"
-            f"Check height, width, depth, dtype, or offset."
+            f"Check height, width, depth, "
+            f"dtype, or offset."
         )
 
     raw = np.fromfile(
@@ -211,7 +231,9 @@ def read_bin_volume(
 
     volume = raw.reshape(shape)
 
-    return volume.astype(np.float32)
+    return volume.astype(
+        np.float32
+    )
 
 
 def make_projection(
@@ -228,24 +250,37 @@ def make_projection(
     """
     if volume.ndim != 3:
         raise ValueError(
-            f"Expected volume shape [H, W, D], got {volume.shape}"
+            f"Expected volume shape [H, W, D], "
+            f"got {volume.shape}"
         )
 
     if projection == "max":
-        img = np.max(volume, axis=2)
+        img = np.max(
+            volume,
+            axis=2,
+        )
 
     elif projection == "p99":
-        img = np.percentile(volume, 99, axis=2)
+        img = np.percentile(
+            volume,
+            99,
+            axis=2,
+        )
 
     elif projection == "mean":
-        img = np.mean(volume, axis=2)
+        img = np.mean(
+            volume,
+            axis=2,
+        )
 
     else:
         raise ValueError(
             f"Unsupported projection: {projection}"
         )
 
-    return img.astype(np.float32)
+    return img.astype(
+        np.float32
+    )
 
 
 def normalize_image(
@@ -259,11 +294,18 @@ def normalize_image(
         minmax
         percentile
     """
-    img = img.astype(np.float32)
+    img = img.astype(
+        np.float32
+    )
 
     if method == "minmax":
-        v_min = float(img.min())
-        v_max = float(img.max())
+        v_min = float(
+            img.min()
+        )
+
+        v_max = float(
+            img.max()
+        )
 
     elif method == "percentile":
         v_min, v_max = np.percentile(
@@ -286,11 +328,17 @@ def normalize_image(
         )
 
     if v_max > v_min:
-        img = (img - v_min) / (v_max - v_min)
+        img = (
+            (img - v_min)
+            / (v_max - v_min)
+        )
+
     else:
         img = img * 0.0
 
-    return img.astype(np.float32)
+    return img.astype(
+        np.float32
+    )
 
 
 # ============================================================
@@ -312,14 +360,23 @@ class PairedBinMAPDataset(Dataset):
         self,
         low_dir: str,
         high_dir: str,
-        shape: Tuple[int, int, int] = (200, 200, 512),
+        shape: Tuple[int, int, int] = (
+            200,
+            200,
+            512,
+        ),
         dtype=np.uint16,
         offset: int = 48,
         projection: str = "p99",
         normalize: str = "percentile",
     ):
-        self.low_dir = Path(low_dir)
-        self.high_dir = Path(high_dir)
+        self.low_dir = Path(
+            low_dir
+        )
+
+        self.high_dir = Path(
+            high_dir
+        )
 
         self.shape = shape
         self.dtype = dtype
@@ -352,7 +409,8 @@ class PairedBinMAPDataset(Dataset):
             )
 
         print(
-            f"Found {len(self.pairs)} LOW/HIGH bin pairs."
+            f"Found {len(self.pairs)} "
+            f"LOW/HIGH bin pairs."
         )
 
     @staticmethod
@@ -398,7 +456,9 @@ class PairedBinMAPDataset(Dataset):
                 low_path
             )
 
-            high_path = high_map.get(key)
+            high_path = high_map.get(
+                key
+            )
 
             if high_path is not None:
                 pairs.append(
@@ -411,13 +471,17 @@ class PairedBinMAPDataset(Dataset):
         return pairs
 
     def __len__(self) -> int:
-        return len(self.pairs)
+        return len(
+            self.pairs
+        )
 
     def __getitem__(
         self,
         idx: int,
     ):
-        low_path, high_path = self.pairs[idx]
+        low_path, high_path = self.pairs[
+            idx
+        ]
 
         low_volume = read_bin_volume(
             low_path,
@@ -519,7 +583,9 @@ class UNetConv2(nn.Module):
         self,
         x: torch.Tensor,
     ) -> torch.Tensor:
-        return self.block(x)
+        return self.block(
+            x
+        )
 
 
 class UNetEnhancer(nn.Module):
@@ -663,7 +729,10 @@ class UNetEnhancer(nn.Module):
         pad_h = x.size(2) % 2
         pad_w = x.size(3) % 2
 
-        if pad_h != 0 or pad_w != 0:
+        if (
+            pad_h != 0
+            or pad_w != 0
+        ):
             x = F.pad(
                 x,
                 (
@@ -822,7 +891,9 @@ class UNetEnhancer(nn.Module):
             x,
         )
 
-        return torch.sigmoid(out)
+        return torch.sigmoid(
+            out
+        )
 
 
 # ============================================================
@@ -841,7 +912,9 @@ def load_trained_model(
         2. checkpoint dict with "model_state_dict"
     """
 
-    path = Path(model_path)
+    path = Path(
+        model_path
+    )
 
     if not path.exists():
         raise FileNotFoundError(
@@ -864,7 +937,9 @@ def load_trained_model(
         and "model_state_dict" in saved_data
     ):
         model.load_state_dict(
-            saved_data["model_state_dict"]
+            saved_data[
+                "model_state_dict"
+            ]
         )
 
         print(
@@ -900,7 +975,10 @@ def save_prediction_image(
     path: Path,
 ) -> None:
     """
-    Save prediction as hot colormap image.
+    Save prediction image.
+
+    Colormap:
+        Prediction -> hot
     """
     path.parent.mkdir(
         parents=True,
@@ -927,7 +1005,9 @@ def save_prediction_image(
     )
 
     plt.axis("off")
+
     plt.colorbar()
+
     plt.tight_layout()
 
     plt.savefig(
@@ -948,7 +1028,10 @@ def save_comparison_image(
 ) -> None:
     """
     Save:
-        LOW | Prediction | HIGH | Absolute Error
+        LOW Input       -> hot
+        Prediction      -> hot
+        HIGH Target     -> hot
+        Absolute Error  -> viridis
     """
 
     path.parent.mkdir(
@@ -996,27 +1079,33 @@ def save_comparison_image(
             "LOW Input",
             0.0,
             1.0,
+            "hot",
         ),
         (
             pred_np,
             "Prediction",
             0.0,
             1.0,
+            "hot",
         ),
         (
             high_np,
             "HIGH Target",
             0.0,
             1.0,
+            "hot",
         ),
         (
             error_np,
             "Absolute Error",
             0.0,
             max(
-                float(error_np.max()),
+                float(
+                    error_np.max()
+                ),
                 1e-8,
             ),
+            "magma",
         ),
     ]
 
@@ -1025,13 +1114,15 @@ def save_comparison_image(
         subtitle,
         vmin,
         vmax,
+        cmap,
     ) in zip(
         axes,
         image_info,
     ):
+
         im = ax.imshow(
             img,
-            cmap="hot",
+            cmap=cmap,
             vmin=vmin,
             vmax=vmax,
         )
@@ -1040,7 +1131,9 @@ def save_comparison_image(
             subtitle
         )
 
-        ax.axis("off")
+        ax.axis(
+            "off"
+        )
 
         fig.colorbar(
             im,
@@ -1073,7 +1166,9 @@ def save_comparison_image(
 
 @torch.no_grad()
 def evaluate() -> None:
-    set_seed(SEED)
+    set_seed(
+        SEED
+    )
 
     device = torch.device(
         "cuda"
@@ -1305,17 +1400,19 @@ def evaluate() -> None:
             current_batch_size
         )
 
-        progress_bar.set_postfix({
-            "L1": (
-                f"{l1_each.mean().item():.4f}"
-            ),
-            "PSNR": (
-                f"{psnr_each.mean().item():.2f}"
-            ),
-            "SSIM": (
-                f"{ssim_each.mean().item():.4f}"
-            ),
-        })
+        progress_bar.set_postfix(
+            {
+                "L1": (
+                    f"{l1_each.mean().item():.4f}"
+                ),
+                "PSNR": (
+                    f"{psnr_each.mean().item():.2f}"
+                ),
+                "SSIM": (
+                    f"{ssim_each.mean().item():.4f}"
+                ),
+            }
+        )
 
         # ----------------------------------------------------
         # Per-image results
@@ -1326,21 +1423,23 @@ def evaluate() -> None:
         ):
             name = names[i]
 
-            result_rows.append({
-                "filename": name,
-                "l1_loss": float(
-                    l1_each[i].item()
-                ),
-                "mse_loss": float(
-                    mse_each[i].item()
-                ),
-                "psnr": float(
-                    psnr_each[i].item()
-                ),
-                "ssim": float(
-                    ssim_each[i].item()
-                ),
-            })
+            result_rows.append(
+                {
+                    "filename": name,
+                    "l1_loss": float(
+                        l1_each[i].item()
+                    ),
+                    "mse_loss": float(
+                        mse_each[i].item()
+                    ),
+                    "psnr": float(
+                        psnr_each[i].item()
+                    ),
+                    "ssim": float(
+                        ssim_each[i].item()
+                    ),
+                }
+            )
 
             # Save prediction
             if SAVE_PREDICTIONS:
