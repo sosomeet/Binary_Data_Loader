@@ -1,0 +1,10 @@
+Evaluation Results
+------------------
+Model path   : D:\University\4-1.5\BOA_lab\Week2_260706_0712\Binary_Data_Loader\models\best\model_best.pth
+Samples      : 45
+Projection   : p99
+Normalization: percentile
+L1 Loss      : 0.115694
+MSE Loss     : 0.027291
+PSNR         : 16.1583 dB
+SSIM         : 0.373662
